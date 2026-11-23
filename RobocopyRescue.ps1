@@ -1,7 +1,7 @@
 ﻿<# : hybrid batch + powershell script
 @echo off
 mode con: cols=85 lines=20
-powershell -noprofile -c "$param='%*';$ScriptPath='%~f0';iex((Get-Content('%~f0') -Raw))"
+powershell -noprofile -c "$param='%*';$ScriptPath='%~f0';iex((Get-Content('%~f0') -Raw -Encoding UTF8))"
 exit /b
 #>
 
@@ -753,4 +753,5 @@ try {
     Write-Host " $_" -ForegroundColor Red
     Write-Host "`n Press Enter to exit..." -ForegroundColor Gray
     Read-Host
+
 }
