@@ -1,13 +1,6 @@
-<# : hybrid batch + powershell script
-@echo off
-mode con: cols=85 lines=20
-powershell -noprofile -c "$param='%*';$ScriptPath='%~f0';iex((Get-Content('%~f0') -Raw -Encoding UTF8))"
-exit /b
-#>
-
 # =========================================================
-#  ROBOCOPY DATA RESCUE v1.1 (IT GROCERIES EDITION)
-#  Hybrid Batch + PowerShell WPF | Side-by-Side Console
+#  ROBOCOPY DATA RESCUE v1.2 (IT GROCERIES EDITION)
+#  PowerShell WPF | Side-by-Side Console | Export to .CMD
 # =========================================================
 
 # [0] บังคับใช้ TLS 1.2 สำหรับการดาวน์โหลดผ่าน HTTPS
@@ -16,7 +9,7 @@ exit /b
 # ---------------------------------------------------------
 # [1] ตั้งค่าพื้นฐานและพจนานุกรมภาษา (EN / TH)
 # ---------------------------------------------------------
-$AppVersion  = "1.1 Build 23.11.2026"
+$AppVersion  = "1.2 Build 24.11.2026"
 $InstallDir  = "$env:LOCALAPPDATA\ITG_RobocopyRescue"
 $TempScript  = "$env:TEMP\RobocopyRescue.ps1"
 $GitHubRepo  = "https://github.com/itgroceries-sudo/RobocopyRescue"
@@ -27,7 +20,7 @@ $LogoURL     = "https://adamtheautomator.com/wp-content/uploads/2019/08/robocopy
 $TargetFile  = if ($ScriptPath) { $ScriptPath } elseif ($PSScriptRoot) { $PSCommandPath } else { $null }
 
 # สร้างชื่อโฟลเดอร์สำรองตามวันที่ปัจจุบัน (BAK-DD-MM-YY)
-$DateTag     = "BAK-" + [DateTime]::Now.ToString("dd-MM-yy", [System.Globalization.CultureInfo]::InvariantCulture)
+$DateTag      = "BAK-" + [DateTime]::Now.ToString("dd-MM-yy", [System.Globalization.CultureInfo]::InvariantCulture)
 $DefaultDrive = if (Test-Path "D:\") { "D:" } else { $env:SystemDrive }
 $DefaultDest  = "$DefaultDrive\$DateTag"
 
@@ -49,6 +42,7 @@ $LangDict = @{
         "OptAppData" = "Exclude AppData (/XD AppData)"
         "OptMT"      = "Fast Multi-Thread Copy (/MT:8)"
         "BtnNotepad" = "Admin Notepad"
+        "BtnSaveCmd" = "Save As .cmd"
         "BtnStart"   = "Start Copy"
         "BtnExit"    = "EXIT"
         "Facebook"   = "Facebook"
@@ -57,6 +51,8 @@ $LangDict = @{
         "LangLabel"  = "Language"
         "ErrNoSrc"   = "Source folder not found:"
         "WarnNoFld"  = "Please select at least one folder to copy."
+        "SaveOK"     = "Saved offline .cmd script successfully:`n"
+        "SaveErr"    = "Failed to save .cmd file:`n"
         "AboutMsg"   = "Robocopy Data Rescue`nVersion: $AppVersion`n`nBypass Windows permissions without Safe Mode.`nDeveloped by IT Groceries Shop"
     }
     "TH" = @{
@@ -75,6 +71,7 @@ $LangDict = @{
         "OptAppData" = "ข้ามไฟล์ขยะ AppData (/XD AppData)"
         "OptMT"      = "ก๊อปปี้ความเร็วสูง (/MT:8)"
         "BtnNotepad" = "เปิด Notepad แอดมิน"
+        "BtnSaveCmd" = "บันทึกเป็น .cmd"
         "BtnStart"   = "เริ่มก๊อปปี้"
         "BtnExit"    = "ออก"
         "Facebook"   = "Facebook"
@@ -83,6 +80,8 @@ $LangDict = @{
         "LangLabel"  = "ภาษา"
         "ErrNoSrc"   = "ไม่พบโฟลเดอร์ต้นทาง:"
         "WarnNoFld"  = "กรุณาเลือกโฟลเดอร์ที่ต้องการก๊อปปี้อย่างน้อย 1 รายการ"
+        "SaveOK"     = "บันทึกไฟล์ .cmd สำหรับดับเบิลคลิกเรียบร้อยแล้ว:`n"
+        "SaveErr"    = "เกิดข้อผิดพลาดในการบันทึกไฟล์:`n"
         "AboutMsg"   = "Robocopy Data Rescue`nเวอร์ชัน: $AppVersion`n`nเครื่องมือดึงข้อมูลทะลุสิทธิ์โดยไม่ต้องเข้า Safe Mode`nพัฒนาโดย IT Groceries Shop"
     }
 }
@@ -471,15 +470,16 @@ try {
             </ScrollViewer>
         </Border>
 
-        <!-- แถบปุ่มดำเนินการหลัก (วิธีที่ 1: Notepad Admin | วิธีที่ 2: Start Copy) -->
+        <!-- แถบปุ่มดำเนินการหลัก: Notepad Admin | Save As .cmd (สีส้ม) | Start Copy -->
         <Grid Grid.Row="3" Margin="0,12,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Button x:Name="btnNotepad" Content="Admin Notepad" Grid.Column="0" Width="175" Height="44" Background="#1565C0" Foreground="White" Style="{StaticResource Btn}" FontSize="14"/>
-            <Button x:Name="btnApply" Content="Start Copy" Grid.Column="2" Width="175" Height="44" Background="#2E7D32" Foreground="White" Style="{StaticResource Btn}" FontSize="15"/>
+            <Button x:Name="btnNotepad" Content="Admin Notepad" Grid.Column="0" Width="165" Height="44" Background="#1565C0" Foreground="White" Style="{StaticResource Btn}" FontSize="14"/>
+            <Button x:Name="btnSaveCmd" Content="Save As .cmd" Grid.Column="1" Width="145" Height="44" Background="#FF9800" Foreground="#000000" Style="{StaticResource Btn}" FontSize="14" HorizontalAlignment="Center"/>
+            <Button x:Name="btnApply" Content="Start Copy" Grid.Column="2" Width="165" Height="44" Background="#2E7D32" Foreground="White" Style="{StaticResource Btn}" FontSize="15"/>
         </Grid>
 
         <!-- แถบปุ่มด้านล่าง: Social, About, Language, EXIT -->
@@ -546,6 +546,7 @@ try {
     $chkExcludeAppData = $Window.FindName("chkExcludeAppData")
     $chkMultiThread    = $Window.FindName("chkMultiThread")
     $btnNotepad        = $Window.FindName("btnNotepad")
+    $btnSaveCmd        = $Window.FindName("btnSaveCmd")
     $btnApply          = $Window.FindName("btnApply")
     $BF                = $Window.FindName("BF")
     $BG                = $Window.FindName("BG")
@@ -616,6 +617,7 @@ try {
         $Window.FindName("T_OptAppData").Text = $D["OptAppData"]
         $Window.FindName("T_OptMT").Text      = $D["OptMT"]
         $btnNotepad.Content                   = $D["BtnNotepad"]
+        $btnSaveCmd.Content                   = $D["BtnSaveCmd"]
         $btnApply.Content                     = $D["BtnStart"]
         $BC.Content                           = $D["BtnExit"]
         $Window.FindName("T_FB").Text         = $D["Facebook"]
@@ -686,6 +688,52 @@ try {
         Start-Process notepad.exe -Verb RunAs
     })
 
+    # อีเวนต์ปุ่ม Save As .cmd (สร้างไฟล์ Hybrid .cmd สำหรับดับเบิลคลิกใช้งานออฟไลน์)
+    $btnSaveCmd.Add_Click({
+        Play-Sound "Click"
+        $D = $LangDict[$script:CurrentLang]
+        $sfd = New-Object System.Windows.Forms.SaveFileDialog
+        $sfd.Title = "Save Offline Hybrid Script (.cmd)"
+        $sfd.Filter = "Windows Command Script (*.cmd)|*.cmd"
+        $sfd.FileName = "RobocopyRescue.cmd"
+        $sfd.InitialDirectory = [Environment]::GetFolderPath("Desktop")
+
+        if ($sfd.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            try {
+                Write-Host " [SAVE] Preparing offline .cmd script..." -ForegroundColor Yellow
+                $rawCode = ""
+                if ($TargetFile -and (Test-Path $TargetFile)) {
+                    $rawCode = [System.IO.File]::ReadAllText($TargetFile, [System.Text.Encoding]::UTF8)
+                } else {
+                    $wc = New-Object System.Net.WebClient
+                    $wc.Encoding = [System.Text.Encoding]::UTF8
+                    $rawCode = $wc.DownloadString($SelfURL)
+                }
+
+                # ลบ BOM เดิมออกเพื่อไม่ให้ CMD แจ้ง Error บรรทัดแรก
+                $rawCode = $rawCode.TrimStart([char]0xFEFF)
+
+                # เติมหัว Hybrid Batch พร้อม -Encoding UTF8 อัตโนมัติ (กรณีต้นฉบับไม่มีหัว Batch)
+                $hybridHeader = "<# : hybrid batch + powershell script`r`n@echo off`r`nmode con: cols=85 lines=20`r`npowershell -noprofile -c `"`$param='%*';`$ScriptPath='%~f0';iex((Get-Content('%~f0') -Raw -Encoding UTF8))`"`r`nexit /b`r`n#>`r`n`r`n"
+                if ($rawCode -notmatch "^<#\s*:\s*hybrid") {
+                    $rawCode = $hybridHeader + $rawCode
+                }
+
+                # บันทึกเป็น UTF-8 (ไม่มี BOM) เพื่อให้ CMD รันลื่นและ PowerShell อ่านภาษาไทยได้สมบูรณ์
+                $utf8NoBom = New-Object System.Text.UTF8Encoding $False
+                [System.IO.File]::WriteAllText($sfd.FileName, $rawCode, $utf8NoBom)
+
+                Write-Host " [SAVE] Saved to: $($sfd.FileName)" -ForegroundColor Green
+                Play-Sound "Done"
+                [System.Windows.MessageBox]::Show("$($D['SaveOK'])$($sfd.FileName)", "Success", "OK", "Information") | Out-Null
+            } catch {
+                Play-Sound "Warn"
+                Write-Host " [ERROR] Save failed: $_" -ForegroundColor Red
+                [System.Windows.MessageBox]::Show("$($D['SaveErr'])$_", "Error", "OK", "Error") | Out-Null
+            }
+        }
+    })
+
     # อีเวนต์ปุ่มวิธีที่ 2: สั่งรัน Robocopy
     $btnApply.Add_Click({
         Play-Sound "Click"
@@ -753,5 +801,4 @@ try {
     Write-Host " $_" -ForegroundColor Red
     Write-Host "`n Press Enter to exit..." -ForegroundColor Gray
     Read-Host
-
 }
