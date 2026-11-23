@@ -40,7 +40,7 @@
 
 ### แบบลิงก์ย่อ (แนะนำ)
 ```powershell
-iex (irm bit.ly/robocopy)
+iex (irm bit.ly/Robocopy)
 ```
 
 ### แบบลิงก์ตรงจาก GitHub
